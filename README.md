@@ -11,23 +11,41 @@ This repository demonstrates a **DevOps architecture** tailored for high-availab
 ```mermaid
 graph TD
     User((User)) -->|HTTP:80| ALB[Application Load Balancer]
-    subgraph VPC [AWS VPC: multi-AZ]
-        subgraph PublicSubnets [Public Subnets]
-            ALB
-        end
-        subgraph PrivateSubnets [Private Subnets]
-            ASG[Auto Scaling Group]
-            Instance1[EC2 Instance: Spot]
-            Instance2[EC2 Instance: Spot]
-        end
+    
+    subgraph GitHub_Actions [CI/CD Pipeline]
+        CI[Checkov / Pytest / Trivy] -->|Deploy| TF[Terraform Apply]
     end
-    ASG --> Instance1
-    ASG --> Instance2
-    Instance1 -->|Metrics:8001| Mon[Monitoring Stack]
-    Instance2 -->|Metrics:8001| Mon
+
+    subgraph AWS_Cloud [AWS Cloud]
+        subgraph VPC [VPC: Multi-AZ]
+            subgraph PublicSubnets [Public Subnets]
+                ALB
+            end
+            
+            subgraph PrivateSubnets [Private Subnets]
+                direction TB
+                subgraph Compute_Options [Compute Layer]
+                    ASG[Auto Scaling Group: Spot]
+                    EKS[EKS Cluster: Optional]
+                end
+                
+                App[Titan App: v2.0]
+                IAM[IAM Role: Least Privilege]
+            end
+        end
+
+        SM[AWS Secrets Manager]
+        CW[CloudWatch: JSON Logs]
+    end
+
+    ALB -->|Forward| App
+    App -->|Fetch| SM
+    App -->|Push| CW
+    App -->|Assume| IAM
+    
     subgraph Observability [Self-Hosted Monitoring]
-        Mon --> Prom[Prometheus]
-        Prom --> Grafana[Grafana Dashboards]
+        App -->|Metrics:8001| Prom[Prometheus]
+        Prom --> Grafana[Grafana]
         Prom --> AM[Alertmanager]
     end
 ```
