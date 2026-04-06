@@ -1,16 +1,15 @@
 #!/bin/bash
 set -e
 
-# Configuration
-REGION="us-east-1"
-# Retrieve account ID dynamically (Requires instance profile with EC2 metadata/STS access or just parse from arbitrary ECR URL)
-# For this demo, we assume the pipeline updates this script or sets an env var.
-# Let's use AWS CLI to get the account ID
+# Retrieve metadata dynamically via IMDSv2 (Required for AL2023)
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+REGION=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REPO_NAME="titan-app"
+PROJECT_NAME="${PROJECT_NAME:-titan-prod}" # Should match prod.tfvars
+REPO_NAME="${PROJECT_NAME}-app"
 IMAGE_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:latest"
 
-echo "Logging into ECR..."
+echo "Logging into ECR in region ${REGION}..."
 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
 
 echo "Pulling latest image..."
@@ -23,6 +22,12 @@ if [ "$(docker ps -q -f name=titan-app)" ]; then
 fi
 
 echo "Starting new container..."
-docker run -d --name titan-app --restart always -p 8000:8000 -p 8001:8001 $IMAGE_URI
+docker run -d --name titan-app \
+    --restart always \
+    -p 8000:8000 \
+    -p 8001:8001 \
+    -e AWS_REGION=$REGION \
+    -e DB_SECRET_NAME="${PROJECT_NAME}-db-secret" \
+    $IMAGE_URI
 
 echo "Deployment successful."

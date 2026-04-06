@@ -62,6 +62,50 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# --- Senior Practice: NAT Gateway for Private Subnets ---
+# Allows instances in private subnets to download updates and reach AWS services (ECR, SM)
+# while remaining inaccessible from the public internet.
+# Note: NAT Gateway incurs a fixed cost (~$32/mo). For a purely free-tier demo, 
+# you could use a 'NAT Instance' instead, but NAT Gateway is the industry standard for production.
+
+resource "aws_eip" "nat" {
+  domain = "vpc"
+  tags = {
+    Name = "${var.project_name}-nat-eip"
+  }
+}
+
+resource "aws_nat_gateway" "this" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id # Place NAT in the first public subnet
+
+  tags = {
+    Name = "${var.project_name}-nat-gw"
+  }
+
+  depends_on = [aws_internet_gateway.this]
+}
+
+# Private Route Table
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.this.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.this.id
+  }
+
+  tags = {
+    Name = "${var.project_name}-private-rt"
+  }
+}
+
+resource "aws_route_table_association" "private" {
+  count          = length(var.private_subnets)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
+}
+
 # Output Subnet IDs
 output "vpc_id" {
   value = aws_vpc.this.id

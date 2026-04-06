@@ -96,6 +96,8 @@ Pushing to the `main` branch will automatically:
 2. Build and push the Docker image to AWS ECR.
 3. Trigger AWS CodeDeploy to pull the new image and restart the application nodes.
 
+> Naming source of truth: `PROJECT_NAME` is defined in `.github/workflows/deploy.yml` and passed into Terraform (`-var "project_name=..."`) and CodeDeploy naming to keep all deployed resources consistent.
+
 ### 3. Local Monitoring Stack
 ```bash
 cd monitoring

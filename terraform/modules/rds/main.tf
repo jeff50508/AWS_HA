@@ -17,7 +17,7 @@ resource "random_password" "master" {
 
 # Store password in AWS Secrets Manager
 resource "aws_secretsmanager_secret" "db_password" {
-  name                    = "${var.project_name}-db-password-${random_password.master.result}" # Append to ensure uniqueness / rotation capability
+  name                    = "${var.project_name}-db-secret" # Convention-based name for app access
   description             = "Master password for RDS instance"
   recovery_window_in_days = 0 # Force delete for demo purposes
 }
@@ -27,6 +27,7 @@ resource "aws_secretsmanager_secret_version" "db_password_val" {
   secret_string = jsonencode({
     username = "admin"
     password = random_password.master.result
+    host     = aws_db_instance.main.endpoint
   })
 }
 

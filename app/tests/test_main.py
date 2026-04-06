@@ -6,12 +6,16 @@ client = TestClient(app)
 def test_read_root():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Hello from AWS DevOps Platform!"}
+    json_res = response.json()
+    assert json_res["message"] == "Hello from AWS DevOps Platform!"
+    assert json_res["version"] == "v2.0 (Senior Grade)"
 
 def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy"}
+    json_res = response.json()
+    assert json_res["status"] == "healthy"
+    assert "database" in json_res["checks"]
 
 def test_heavy_load():
     response = client.get("/heavy-load")

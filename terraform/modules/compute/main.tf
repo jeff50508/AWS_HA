@@ -57,6 +57,15 @@ resource "aws_launch_template" "app_lt" {
   # Security Groups
   vpc_security_group_ids = [var.app_sg_id]
 
+  # --- Senior Practice: IMDSv2 for Docker ---
+  # We must increase the hop limit to 2, otherwise containers on the docker bridge
+  # cannot reach the metadata service (169.254.169.254) to assume the IAM role!
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required" # Enforce IMDSv2
+    http_put_response_hop_limit = 2          # Allow 1 hop for docker bridge
+  }
+
   # Instance Market Options (Spot)
   instance_market_options {
     market_type = "spot"
@@ -68,13 +77,22 @@ resource "aws_launch_template" "app_lt" {
   user_data = base64encode(<<-EOF
               #!/bin/bash
               yum update -y
-              yum install -y docker
+              yum install -y docker ruby wget
               systemctl start docker
               systemctl enable docker
               
-              # Simple Docker Health Check Placeholder
-              # docker pull your_registry/app:latest
-              # docker run -d --restart always -p 8000:8000 your_registry/app:latest
+              # --- Senior Practice: CodeDeploy Agent Installation (AL2023) ---
+              # This is required for the CI/CD pipeline hooks (appspec.yml) to work.
+              # We fetch the installer based on the current region.
+              TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+              REGION=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')
+              
+              cd /home/ec2-user
+              wget https://aws-codedeploy-$REGION.s3.$REGION.amazonaws.com/latest/install
+              chmod +x ./install
+              ./install auto
+              systemctl start codedeploy-agent
+              systemctl enable codedeploy-agent
               EOF
   )
 

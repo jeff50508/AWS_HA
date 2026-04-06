@@ -26,13 +26,40 @@ REQUEST_COUNT = Counter('request_count', 'Total number of requests', ['method', 
 LATENCY = Histogram('request_latency_seconds', 'Request latency', ['endpoint'])
 
 import os
-# --- Senior Practice: Secrets Management ---
-# In production, this would use boto3 to fetch from AWS Secrets Manager
-# Currently simulating by reading environment variables set by the deployment
+import boto3
+from botocore.exceptions import ClientError
+
+# --- Senior Practice: Real Secrets Management ---
+# In production, this uses boto3 to fetch from AWS Secrets Manager.
+# It ensures no sensitive credentials ever live in source code or CI env vars.
 def get_db_secret():
-    db_host = os.environ.get("DB_HOST", "titandb.cluster-placeholder.aws.com")
-    logger.info(f"Connecting to database at {db_host}...")
-    return f"Connected to {db_host}"
+    # Convention: titan-prod-db-secret (where titan-prod is the project_name from Terraform)
+    secret_name = os.environ.get("DB_SECRET_NAME", "titan-prod-db-secret")
+    region_name = os.environ.get("AWS_REGION", "us-east-1")
+
+    # Fallback for local testing or if AWS access is missing
+    if os.environ.get("LOCAL_DEV", "false") == "true":
+        return "local-dev-db-string"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+        # Decrypts secret using the associated KMS key.
+        secret = json.loads(get_secret_value_response['SecretString'])
+        logger.info("Successfully fetched secret from Secrets Manager")
+        return f"Connected to {secret.get('host', 'unknown')}"
+    except ClientError as e:
+        logger.error(f"Error fetching secret: {e}")
+        # Return a non-sensitive identifier for the db host in health check
+        return os.environ.get("DB_HOST", "titandb.cluster-placeholder.aws.com")
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):

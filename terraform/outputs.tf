@@ -7,3 +7,8 @@ output "vpc_id" {
   description = "VPC ID for this project"
   value       = module.vpc.vpc_id
 }
+
+output "repository_url" {
+  description = "ECR Repository URL"
+  value       = module.ecr.repository_url
+}

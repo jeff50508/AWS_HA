@@ -23,3 +23,5 @@ scrape_configs:
   - job_name: 'fastapi-app'
     static_configs:
       - targets: ['host.docker.internal:8001'] # Simulating EC2 metrics exposure
+    # Senior Practice: In a real AWS environment, use 'ec2_sd_configs' to 
+    # automatically discover instances based on tags!

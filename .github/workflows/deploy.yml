@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  PROJECT_NAME: titan-prod
+
 jobs:
   # 1. Infrastructure Quality & Security Scan
   iac-scan:
@@ -45,6 +48,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Pytest
+        env:
+          LOCAL_DEV: "true"
         run: |
           cd app
           export PYTHONPATH=$PYTHONPATH:.
@@ -93,30 +98,32 @@ jobs:
           aws-region: us-east-1
 
       - name: Terraform Apply (Production)
+        id: terraform
         run: |
           cd terraform
           terraform init
-          terraform apply -var-file="prod.tfvars" -auto-approve
+          terraform apply -var-file="prod.tfvars" -var "project_name=${{ env.PROJECT_NAME }}" -auto-approve
+          # Export repository URL for next steps
+          echo "ECR_REPO=$(terraform output -raw repository_url)" >> $GITHUB_ENV
         # Senior Practice: Always use -var-file for env-specific configs
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: titan-ops-app
-          IMAGE_TAG: latest # In production, use ${{ github.sha }} and update appspec dynamic
+      - name: Build, Tag, and Push Image to ECR
+        id: build-push
         run: |
           cd app
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build -t ${ECR_REPO}:latest -t ${ECR_REPO}:${{ github.sha }} .
+          docker push ${ECR_REPO}:latest
+          docker push ${ECR_REPO}:${{ github.sha }}
 
-      - name: Deploy application via AWS CodeDeploy
+      - name: Trigger AWS CodeDeploy
         run: |
           aws deploy create-deployment \
-            --application-name titan-ops-app \
-            --deployment-group-name titan-ops-dg \
+            --application-name ${{ env.PROJECT_NAME }}-app \
+            --deployment-group-name ${{ env.PROJECT_NAME }}-dg \
             --github-location repository=${{ github.repository }},commitId=${{ github.sha }} \
             --ignore-application-stop-failures
+        # Senior Practice: CodeDeploy handles zero-downtime rolling updates for our ASG fleet

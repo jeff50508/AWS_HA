@@ -3,6 +3,14 @@ os: linux
 files:
   - source: /
     destination: /var/www/titan-app
+permissions:
+  - object: /var/www/titan-app/scripts
+    pattern: "**"
+    owner: root
+    group: root
+    mode: 755
+    type:
+      - file
 hooks:
   ApplicationStart:
     - location: scripts/start_docker.sh
