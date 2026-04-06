@@ -74,7 +74,7 @@ jobs:
         with:
           image-ref: 'project-titan-app:${{ github.sha }}'
           format: 'table'
-          # Senior decision: Exit 1 on CRITICAL vulnerabilities to prevent insecure deployments
+          # Exit 1 on CRITICAL vulnerabilities to prevent insecure deployments
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
@@ -105,7 +105,7 @@ jobs:
           terraform apply -var-file="prod.tfvars" -var "project_name=${{ env.PROJECT_NAME }}" -auto-approve
           # Export repository URL for next steps
           echo "ECR_REPO=$(terraform output -raw repository_url)" >> $GITHUB_ENV
-        # Senior Practice: Always use -var-file for env-specific configs
+        # Always use -var-file for env-specific configs
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -126,4 +126,4 @@ jobs:
             --deployment-group-name ${{ env.PROJECT_NAME }}-dg \
             --github-location repository=${{ github.repository }},commitId=${{ github.sha }} \
             --ignore-application-stop-failures
-        # Senior Practice: CodeDeploy handles zero-downtime rolling updates for our ASG fleet
+        # CodeDeploy handles zero-downtime rolling updates for our ASG fleet

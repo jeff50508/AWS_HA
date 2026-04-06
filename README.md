@@ -5,7 +5,7 @@
 [![DevSecOps: Checkov](https://img.shields.io/badge/DevSecOps-Checkov-brightgreen)](https://www.checkov.io/)
 [![Cloud: AWS](https://img.shields.io/badge/Cloud-AWS-FF9900)](https://aws.amazon.com/)
 
-This repository demonstrates an **Advanced DevOps architecture** tailored for high-availability, zero-trust security, and automated deployments on AWS. It showcases skills expected from a Senior DevOps Engineer.
+This repository demonstrates an **Advanced DevOps architecture** tailored for high-availability, zero-trust security, and automated deployments on AWS.
 
 ## 🏗️ Architecture Overview
 
@@ -110,3 +110,4 @@ docker-compose up -d
 *   *"To protect the application edge, I implemented AWS WAF on the ALB to mitigate OWASP Top 10 vulnerabilities like SQL injection before traffic even hits our VPC."*
 *   *"Instead of hardcoding credentials, I integrated AWS Secrets Manager. Terraform automatically generates a strong random database password, stores it in Secrets Manager, and the application dynamically retrieves it via boto3."*
 *   *"For deployments, I transitioned the architecture from static user-data scripts to a modern CI/CD flow utilizing AWS ECR as the immutable registry and AWS CodeDeploy to orchestrate container rollouts across our Spot Instance ASG fleet."*
+*   *"When migrating to Amazon Linux 2023 with strict IMDSv2 enforcement, I identified and resolved a complex networking issue where Docker bridge containers couldn't access AWS credentials by correctly configuring the metadata `http_put_response_hop_limit` via Terraform."*

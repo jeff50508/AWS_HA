@@ -6,7 +6,7 @@ import json
 from pythonjsonlogger import jsonlogger
 from prometheus_client import start_http_server, Summary, Counter, Histogram
 
-# --- Senior Practice: Structured JSON Logging ---
+# --- Structured JSON Logging ---
 # Plain text logs are for amateurs. JSON logs are for CloudWatch/ELK indexing.
 log_handler = logging.StreamHandler()
 formatter = jsonlogger.JsonFormatter(
@@ -29,7 +29,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
-# --- Senior Practice: Real Secrets Management ---
+# --- Real Secrets Management ---
 # In production, this uses boto3 to fetch from AWS Secrets Manager.
 # It ensures no sensitive credentials ever live in source code or CI env vars.
 def get_db_secret():
@@ -82,7 +82,7 @@ async def read_root():
     REQUEST_COUNT.labels(method='GET', endpoint='/', http_status=200).inc()
     return {
         "message": "Hello from AWS DevOps Platform!",
-        "version": "v2.0 (Senior Grade)",
+        "version": "v2.0",
         "db_status": "connected"
     }
 

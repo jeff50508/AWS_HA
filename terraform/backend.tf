@@ -1,5 +1,5 @@
 # To enable Remote State (S3 + DynamoDB Locking), uncomment and configure below:
-# This is a Senior/Lead DevOps standard to prevent state corruption.
+# This is a standard to prevent state corruption.
 
 /*
 terraform {

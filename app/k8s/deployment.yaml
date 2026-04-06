@@ -14,7 +14,7 @@ spec:
       labels:
         app: titan-app
       annotations:
-        # Senior Practice: Prometheus Scrape Config
+        # Prometheus Scrape Config
         prometheus.io/scrape: "true"
         prometheus.io/port: "8001"
     spec:

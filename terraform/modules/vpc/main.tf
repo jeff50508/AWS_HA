@@ -62,7 +62,7 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# --- Senior Practice: NAT Gateway for Private Subnets ---
+# --- NAT Gateway for Private Subnets ---
 # Allows instances in private subnets to download updates and reach AWS services (ECR, SM)
 # while remaining inaccessible from the public internet.
 # Note: NAT Gateway incurs a fixed cost (~$32/mo). For a purely free-tier demo, 

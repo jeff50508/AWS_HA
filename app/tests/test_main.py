@@ -8,7 +8,7 @@ def test_read_root():
     assert response.status_code == 200
     json_res = response.json()
     assert json_res["message"] == "Hello from AWS DevOps Platform!"
-    assert json_res["version"] == "v2.0 (Senior Grade)"
+    assert json_res["version"] == "v2.0"
 
 def test_health_check():
     response = client.get("/health")

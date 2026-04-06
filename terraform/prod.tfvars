@@ -1,5 +1,5 @@
 # --- Production Environment Variables ---
-# Senior DevOps practice: Separate state and config per environment
+# Separate state and config per environment
 
 aws_region   = "us-east-1"
 project_name = "titan-prod"

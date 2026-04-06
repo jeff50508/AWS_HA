@@ -29,7 +29,7 @@ module "security" {
   vpc_id       = module.vpc.vpc_id
 }
 
-# 3. IAM Module (Senior Practice: Instance Identity & Least Privilege)
+# 3. IAM Module (Instance Identity & Least Privilege)
 module "iam" {
   source       = "./modules/iam"
   project_name = var.project_name
@@ -49,7 +49,7 @@ module "compute" {
   iam_instance_profile = module.iam.instance_profile_name
 }
 
-# 5. Kubernetes (EKS) Module (Senior Practice: Modern Scalable Infra)
+# 5. Kubernetes (EKS) Module (Modern Scalable Infra)
 # Note: EKS deployment is commented out by default as it incurs significant AWS costs (~$72/mo + nodes)
 # But having this module shows you can handle K8s infrastructure.
 
@@ -61,7 +61,7 @@ module "eks" {
 }
 */
 
-# 6. RDS Database Module (Senior Practice: Stateful Data Layer)
+# 6. RDS Database Module (Stateful Data Layer)
 module "rds" {
   source             = "./modules/rds"
   project_name       = var.project_name
@@ -69,7 +69,7 @@ module "rds" {
   rds_sg_id          = module.security.rds_sg_id
 }
 
-# 7. Edge Security Module (Senior Practice: WAF)
+# 7. Edge Security Module (WAF)
 module "waf" {
   source       = "./modules/waf"
   project_name = var.project_name

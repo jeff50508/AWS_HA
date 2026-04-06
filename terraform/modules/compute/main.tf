@@ -49,7 +49,7 @@ resource "aws_launch_template" "app_lt" {
   image_id      = var.image_id
   instance_type = var.instance_type
 
-  # IAM Instance Profile (Senior Practice: Least Privilege)
+  # IAM Instance Profile (Least Privilege)
   iam_instance_profile {
     name = var.iam_instance_profile
   }
@@ -57,7 +57,7 @@ resource "aws_launch_template" "app_lt" {
   # Security Groups
   vpc_security_group_ids = [var.app_sg_id]
 
-  # --- Senior Practice: IMDSv2 for Docker ---
+  # --- IMDSv2 for Docker ---
   # We must increase the hop limit to 2, otherwise containers on the docker bridge
   # cannot reach the metadata service (169.254.169.254) to assume the IAM role!
   metadata_options {
@@ -81,7 +81,7 @@ resource "aws_launch_template" "app_lt" {
               systemctl start docker
               systemctl enable docker
               
-              # --- Senior Practice: CodeDeploy Agent Installation (AL2023) ---
+              # --- CodeDeploy Agent Installation (AL2023) ---
               # This is required for the CI/CD pipeline hooks (appspec.yml) to work.
               # We fetch the installer based on the current region.
               TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")

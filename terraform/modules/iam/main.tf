@@ -20,7 +20,7 @@ resource "aws_iam_role_policy_attachment" "ssm_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-# --- Senior Practice: Custom Policy for Secrets Manager (Least Privilege) ---
+# --- Custom Policy for Secrets Manager (Least Privilege) ---
 resource "aws_iam_policy" "secrets_policy" {
   name        = "${var.project_name}-secrets-policy"
   description = "Allow app to read specific secrets and identify self"
@@ -56,7 +56,7 @@ resource "aws_iam_role_policy_attachment" "ecr_read" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
-# --- Senior Practice: Least Privilege for CodeDeploy Agent ---
+# --- Least Privilege for CodeDeploy Agent ---
 # The agent only needs S3 read access to download the deployment bundle.
 # Providing the full AmazonEC2RoleforAWSCodeDeploy here would give the EC2 instance
 # overly broad permissions to manage ASGs (violating least privilege).
