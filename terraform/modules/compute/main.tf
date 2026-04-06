@@ -49,6 +49,11 @@ resource "aws_launch_template" "app_lt" {
   image_id      = var.image_id
   instance_type = var.instance_type
 
+  # IAM Instance Profile (Senior Practice: Least Privilege)
+  iam_instance_profile {
+    name = var.iam_instance_profile
+  }
+
   # Security Groups
   vpc_security_group_ids = [var.app_sg_id]
 

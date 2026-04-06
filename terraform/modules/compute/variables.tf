@@ -44,3 +44,8 @@ variable "app_port" {
   type        = number
   default     = 8000
 }
+
+variable "iam_instance_profile" {
+  description = "IAM instance profile name"
+  type        = string
+}

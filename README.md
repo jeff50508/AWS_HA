@@ -46,6 +46,11 @@ graph TD
 *   **Dashboards-as-Code**: Grafana is fully provisioned via code. No manual "click-ops" to setup datasources or dashboards.
 *   **Actionable Alerting**: Implemented Prometheus `Alertmanager` with rules for **High Latency (SLI)** and **Instance Failure**, moving from "monitoring" to "proactive incident response."
 
+### 4. Kubernetes (EKS) Infrastructure Template
+*   **Modern Orchestration**: Added a pre-built **EKS Module** (`terraform/modules/eks`) for production-grade Kubernetes clusters.
+*   **Spot Node Groups**: Integrated **Managed Node Groups** utilizing **Spot Instances** for cost-efficient worker nodes.
+*   **K8s Manifests-as-Code**: Includes sample **Deployment** and **Service** manifests in `app/k8s/` to demonstrate application deployment on EKS.
+
 ## 🚀 Getting Started
 
 ### 1. Infrastructure

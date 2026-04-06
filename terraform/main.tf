@@ -29,15 +29,34 @@ module "security" {
   vpc_id       = module.vpc.vpc_id
 }
 
-# 3. Compute Module (ALB + ASG with Spot)
-module "compute" {
-  source             = "./modules/compute"
-  project_name       = var.project_name
-  vpc_id             = module.vpc.vpc_id
-  public_subnet_ids  = module.vpc.public_subnet_ids
-  private_subnet_ids = module.vpc.private_subnet_ids
-  alb_sg_id          = module.security.alb_sg_id
-  app_sg_id          = module.security.app_sg_id
-  image_id           = data.aws_ami.amazon_linux.id
-  instance_type      = "t3.micro"
+# 3. IAM Module (Senior Practice: Instance Identity & Least Privilege)
+module "iam" {
+  source       = "./modules/iam"
+  project_name = var.project_name
 }
+
+# 4. Compute Module (ALB + ASG with Spot)
+module "compute" {
+  source               = "./modules/compute"
+  project_name         = var.project_name
+  vpc_id               = module.vpc.vpc_id
+  public_subnet_ids    = module.vpc.public_subnet_ids
+  private_subnet_ids   = module.vpc.private_subnet_ids
+  alb_sg_id            = module.security.alb_sg_id
+  app_sg_id            = module.security.app_sg_id
+  image_id             = data.aws_ami.amazon_linux.id
+  instance_type        = "t3.micro"
+  iam_instance_profile = module.iam.instance_profile_name
+}
+
+# 5. Kubernetes (EKS) Module (Senior Practice: Modern Scalable Infra)
+# Note: EKS deployment is commented out by default as it incurs significant AWS costs (~$72/mo + nodes)
+# But having this module shows you can handle K8s infrastructure.
+
+/*
+module "eks" {
+  source             = "./modules/eks"
+  project_name       = var.project_name
+  private_subnet_ids = module.vpc.private_subnet_ids
+}
+*/

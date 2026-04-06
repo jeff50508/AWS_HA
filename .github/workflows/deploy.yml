@@ -75,15 +75,26 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL'
 
-  # 4. Professional Deployment Logic (Simulated)
+  # 4. Professional Deployment Logic (Multi-Environment)
   deploy:
     name: "Production Deployment"
     needs: security-scan
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Simulate Blue-Green Deployment
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Terraform Apply (Production)
         run: |
-          echo "Infrastructure validated. App tested. Security passed."
-          echo "Deploying to AWS Private Subnet via ASG Refresh..."
-          echo "Deployment successful for version ${{ github.sha }}!"
+          cd terraform
+          terraform init
+          terraform apply -var-file="prod.tfvars" -auto-approve
+        # Senior Practice: Always use -var-file for env-specific configs

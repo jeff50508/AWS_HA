@@ -3,3 +3,5 @@ uvicorn
 prometheus-client
 pytest
 httpx
+python-json-logger
+boto3
