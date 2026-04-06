@@ -1,0 +1,32 @@
+groups:
+  - name: titan_alerts
+    rules:
+      # 1. Availability Alert
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "Service has been down for more than 1 minute."
+
+      # 2. Performance Alert (Latency)
+      - alert: HighRequestLatency
+        expr: request_processing_seconds_sum / request_processing_seconds_count > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Latency on {{ $labels.instance }}"
+          description: "Average latency is above 500ms for 2 minutes."
+
+      # 3. Resource Alert (CPU)
+      - alert: HighCPULoad
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU Load on {{ $labels.instance }}"
+          description: "CPU load is above 80% for 5 minutes."

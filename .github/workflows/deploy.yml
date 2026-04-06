@@ -1,0 +1,89 @@
+name: Titan-Ops CI/CD Platform
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # 1. Infrastructure Quality & Security Scan
+  iac-scan:
+    name: "Infrastructure Scan (Checkov)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: terraform
+
+      - name: Checkov IaC Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform/
+          framework: terraform
+          soft_fail: true # Set to false to block builds on security violations
+
+  # 2. Application Unit & Integration Testing
+  app-test:
+    name: "Application Testing (Pytest)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          cd app
+          pip install -r requirements.txt
+
+      - name: Run Pytest
+        run: |
+          cd app
+          export PYTHONPATH=$PYTHONPATH:.
+          pytest tests/
+
+  # 3. Container Security & Supply Chain
+  security-scan:
+    name: "Container Security (Trivy)"
+    needs: [iac-scan, app-test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: |
+          cd app
+          docker build -t project-titan-app:${{ github.sha }} .
+
+      - name: Run Trivy scanner (Blocking CRITICAL)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'project-titan-app:${{ github.sha }}'
+          format: 'table'
+          # Senior decision: Exit 1 on CRITICAL vulnerabilities to prevent insecure deployments
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL'
+
+  # 4. Professional Deployment Logic (Simulated)
+  deploy:
+    name: "Production Deployment"
+    needs: security-scan
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simulate Blue-Green Deployment
+        run: |
+          echo "Infrastructure validated. App tested. Security passed."
+          echo "Deploying to AWS Private Subnet via ASG Refresh..."
+          echo "Deployment successful for version ${{ github.sha }}!"
