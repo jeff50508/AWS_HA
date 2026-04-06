@@ -4,7 +4,7 @@
 [![IaC: Terraform](https://img.shields.io/badge/IaC-Terraform-623CE4)](https://www.terraform.io/)
 [![DevSecOps: Checkov](https://img.shields.io/badge/DevSecOps-Checkov-brightgreen)](https://www.checkov.io/)
 
-This repository demonstrates a **Senior/Lead level DevOps architecture** tailored for high-availability, security, and cost-optimization on AWS. It transforms a standard "web app" into a production-grade infrastructure platform.
+This repository demonstrates a **DevOps architecture** tailored for high-availability, security, and cost-optimization on AWS. It transforms a standard "web app" into a production-grade infrastructure platform.
 
 ## 🏗️ Architecture Overiew
 
@@ -68,6 +68,3 @@ docker-compose up -d
 *   "I implemented a **Multi-AZ architecture** with subnets isolation to ensure 99.9% availability."
 *   "By leveraging **AWS Spot Instances** in the ASG, I reduced compute costs by approximately 75% without sacrificing resilience."
 *   "The CI/CD pipeline acts as a **Security Gate**, using Checkov and Trivy to ensure Zero-Trust compliance at the source-code level."
-
----
-*Created for the "Titan-Ops" Portfolio to demonstrate Senior-level AWS/DevOps proficiency.*
