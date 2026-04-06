@@ -60,3 +60,32 @@ module "eks" {
   private_subnet_ids = module.vpc.private_subnet_ids
 }
 */
+
+# 6. RDS Database Module (Senior Practice: Stateful Data Layer)
+module "rds" {
+  source             = "./modules/rds"
+  project_name       = var.project_name
+  private_subnet_ids = module.vpc.private_subnet_ids
+  rds_sg_id          = module.security.rds_sg_id
+}
+
+# 7. Edge Security Module (Senior Practice: WAF)
+module "waf" {
+  source       = "./modules/waf"
+  project_name = var.project_name
+  alb_arn      = module.compute.alb_arn
+}
+
+# 8. Container Registry (ECR)
+module "ecr" {
+  source       = "./modules/ecr"
+  project_name = var.project_name
+}
+
+# 9. Advanced Deployment Strategy (CodeDeploy)
+module "codedeploy" {
+  source            = "./modules/codedeploy"
+  project_name      = var.project_name
+  asg_name          = module.compute.asg_name
+  target_group_name = module.compute.app_tg_name
+}

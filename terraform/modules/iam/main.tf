@@ -44,6 +44,16 @@ resource "aws_iam_role_policy_attachment" "secrets_attach" {
   policy_arn = aws_iam_policy.secrets_policy.arn
 }
 
+resource "aws_iam_role_policy_attachment" "ecr_read" {
+  role       = aws_iam_role.app_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+resource "aws_iam_role_policy_attachment" "codedeploy" {
+  role       = aws_iam_role.app_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy"
+}
+
 resource "aws_iam_instance_profile" "app_profile" {
   name = "${var.project_name}-instance-profile"
   role = aws_iam_role.app_role.name

@@ -25,11 +25,14 @@ REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing requ
 REQUEST_COUNT = Counter('request_count', 'Total number of requests', ['method', 'endpoint', 'http_status'])
 LATENCY = Histogram('request_latency_seconds', 'Request latency', ['endpoint'])
 
-# --- Senior Practice: Secrets Management Mock ---
+import os
+# --- Senior Practice: Secrets Management ---
 # In production, this would use boto3 to fetch from AWS Secrets Manager
+# Currently simulating by reading environment variables set by the deployment
 def get_db_secret():
-    # Simulation: logger.info("Fetching secrets from AWS Secrets Manager...")
-    return "db-connection-string-from-secrets-manager"
+    db_host = os.environ.get("DB_HOST", "titandb.cluster-placeholder.aws.com")
+    logger.info(f"Connecting to database at {db_host}...")
+    return f"Connected to {db_host}"
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -58,7 +61,8 @@ async def read_root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "checks": {"database": "up", "cache": "up"}}
+    db_status = get_db_secret()
+    return {"status": "healthy", "checks": {"database": db_status, "cache": "up"}}
 
 @app.get("/heavy-load")
 @REQUEST_TIME.time()

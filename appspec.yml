@@ -1,0 +1,10 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/www/titan-app
+hooks:
+  ApplicationStart:
+    - location: scripts/start_docker.sh
+      timeout: 300
+      runas: root

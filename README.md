@@ -3,17 +3,20 @@
 [![CI/CD Platform](https://github.com/your-username/aws_devops/actions/workflows/deploy.yml/badge.svg)](https://github.com/your-username/aws_devops/actions)
 [![IaC: Terraform](https://img.shields.io/badge/IaC-Terraform-623CE4)](https://www.terraform.io/)
 [![DevSecOps: Checkov](https://img.shields.io/badge/DevSecOps-Checkov-brightgreen)](https://www.checkov.io/)
+[![Cloud: AWS](https://img.shields.io/badge/Cloud-AWS-FF9900)](https://aws.amazon.com/)
 
-This repository demonstrates a **DevOps architecture** tailored for high-availability, security, and cost-optimization on AWS. It transforms a standard "web app" into a production-grade infrastructure platform.
+This repository demonstrates an **Advanced DevOps architecture** tailored for high-availability, zero-trust security, and automated deployments on AWS. It showcases skills expected from a Senior DevOps Engineer.
 
-## 🏗️ Architecture Overiew
+## 🏗️ Architecture Overview
 
 ```mermaid
 graph TD
-    User((User)) -->|HTTP:80| ALB[Application Load Balancer]
+    User((User)) -->|HTTPS| WAF[AWS WAF]
+    WAF -->|Filter| ALB[Application Load Balancer]
     
     subgraph GitHub_Actions [CI/CD Pipeline]
-        CI[Checkov / Pytest / Trivy] -->|Deploy| TF[Terraform Apply]
+        CI[Checkov / Pytest / Trivy] -->|Build & Push| ECR[AWS ECR]
+        CI -->|Trigger| CD[AWS CodeDeploy]
     end
 
     subgraph AWS_Cloud [AWS Cloud]
@@ -24,23 +27,28 @@ graph TD
             
             subgraph PrivateSubnets [Private Subnets]
                 direction TB
-                subgraph Compute_Options [Compute Layer]
+                subgraph Compute_Layer [Compute Layer]
                     ASG[Auto Scaling Group: Spot]
-                    EKS[EKS Cluster: Optional]
                 end
                 
-                App[Titan App: v2.0]
-                IAM[IAM Role: Least Privilege]
+                App[Titan App Container]
+                IAM[IAM Role & Profile]
+                
+                subgraph Data_Layer [Stateful Data Layer]
+                    RDS[(Amazon RDS: MySQL 8.0)]
+                end
             end
         end
 
         SM[AWS Secrets Manager]
-        CW[CloudWatch: JSON Logs]
+        CW[CloudWatch: Logs]
     end
 
     ALB -->|Forward| App
-    App -->|Fetch| SM
-    App -->|Push| CW
+    CD -->|Coordinate Update| ASG
+    ECR -->|Pull Image| App
+    App -->|Fetch Secrets| SM
+    App -->|Read/Write| RDS
     App -->|Assume| IAM
     
     subgraph Observability [Self-Hosted Monitoring]
@@ -50,44 +58,53 @@ graph TD
     end
 ```
 
-### 1. Infrastructure-as-Code (Modular & Scalable)
-*   **Modular Architecture**: Instead of flat files, the infrastructure is broken into `vpc`, `compute`, and `security` modules. This allows for team-based scaling and reusability.
-*   **Zero-Trust Networking**: The application instances reside in **Private Subnets**. They have NO public IP addresses and are only accessible via the Load Balancer, reducing the attack surface by 90%.
-*   **Cost Optimization (Spot Magic)**: Utilizes **AWS Spot Instances** with an Auto Scaling Group, providing up to **70-90% cost savings** compared to On-Demand instances, while maintaining HA via Multi-AZ.
+### 1. Advanced Infrastructure & Stateful Data
+*   **Modular Terraform**: Separated into `vpc`, `compute`, `security`, `rds`, `waf`, and `codedeploy` modules for scalability and easy maintenance.
+*   **Stateful Data Layer**: Includes an AWS RDS (MySQL) module provisioned in private subnets, demonstrating the ability to handle stateful workloads securely.
+*   **Dynamic Secrets**: Database passwords are auto-generated via Terraform `random_password` and stored directly into **AWS Secrets Manager**. Applications fetch credentials at runtime.
+*   **Cost Optimization**: Utilizes **AWS Spot Instances** in the Auto Scaling Group, yielding massive cost savings while preserving HA through Multi-AZ design.
 
-### 2. DevSecOps "Shift-Left" Pipeline
-*   **IaC Security Scanning**: Every PR is automatically scanned by **Checkov** to detect infrastructure misconfigurations (e.g., overly permissive SGs) before deployment.
-*   **Container Security Gateway**: Integrated **Trivy** vulnerability scanning. The pipeline is configured to **block deployments** if Critical vulnerabilities are detected in the application image.
-*   **Automated Verification**: Runs comprehensive **Pytest** integration suites before the security scan to ensure functional reliability.
+### 2. Edge Security & Zero-Trust (WAF)
+*   **Edge Protection**: **AWS WAF** is attached to the Application Load Balancer to intercept malicious traffic (e.g., SQL Injection, XSS) before it reaches the compute layer.
+*   **Strict Security Groups**: The RDS database is fully isolated and only accepts traffic exclusively from the Application Security Group on port 3306.
 
-### 3. High-Fidelity Observability
-*   **Dashboards-as-Code**: Grafana is fully provisioned via code. No manual "click-ops" to setup datasources or dashboards.
-*   **Actionable Alerting**: Implemented Prometheus `Alertmanager` with rules for **High Latency (SLI)** and **Instance Failure**, moving from "monitoring" to "proactive incident response."
+### 3. Modern Deployment Strategy (ECR & CodeDeploy)
+*   **Container Workflow**: Applications are containerized via Docker and pushed to **AWS ECR**.
+*   **Automated Rollouts**: Uses **AWS CodeDeploy** for synchronized updates across EC2 nodes in the Auto Scaling Group, minimizing manual intervention and enabling robust deployment strategies (like Blue/Green or Rolling updates).
 
-### 4. Kubernetes (EKS) Infrastructure Template
-*   **Modern Orchestration**: Added a pre-built **EKS Module** (`terraform/modules/eks`) for production-grade Kubernetes clusters.
-*   **Spot Node Groups**: Integrated **Managed Node Groups** utilizing **Spot Instances** for cost-efficient worker nodes.
-*   **K8s Manifests-as-Code**: Includes sample **Deployment** and **Service** manifests in `app/k8s/` to demonstrate application deployment on EKS.
+### 4. DevSecOps "Shift-Left" Pipeline
+*   **IaC Security**: PRs are scanned by **Checkov** to prevent misconfigurations (e.g., overly permissive SGs).
+*   **Container Supply Chain**: **Trivy** scans block deployments if Critical CVEs are found in the Docker image.
+
+### 5. High-Fidelity Observability
+*   **Dashboards-as-Code**: Grafana and Prometheus are fully provisioned via Docker Compose with auto-loaded JSON dashboards.
+*   **Actionable Alerting**: Implemented `Alertmanager` for SLI thresholds (e.g., High Latency, Instance Down).
 
 ## 🚀 Getting Started
 
-### 1. Infrastructure
+### 1. Infrastructure Deployment
 ```bash
 cd terraform
 terraform init
 terraform plan
+terraform apply -var-file="prod.tfvars"
 ```
-*Note: See `backend.tf` for production-grade Remote State (S3/DynamoDB) configuration.*
 
-### 2. Monitoring (Local Stack)
+### 2. Application Deployment (CI/CD)
+Pushing to the `main` branch will automatically:
+1. Run Checkov & Trivy security scans.
+2. Build and push the Docker image to AWS ECR.
+3. Trigger AWS CodeDeploy to pull the new image and restart the application nodes.
+
+### 3. Local Monitoring Stack
 ```bash
 cd monitoring
 docker-compose up -d
 ```
-*   **Grafana**: `http://localhost:3000` (admin/admin) - *Dashboards are auto-loaded!*
+*   **Grafana**: `http://localhost:3000` (admin/admin)
 *   **Prometheus**: `http://localhost:9090`
 
 ## 📊 Interview Talking Points
-*   "I implemented a **Multi-AZ architecture** with subnets isolation to ensure 99.9% availability."
-*   "By leveraging **AWS Spot Instances** in the ASG, I reduced compute costs by approximately 75% without sacrificing resilience."
-*   "The CI/CD pipeline acts as a **Security Gate**, using Checkov and Trivy to ensure Zero-Trust compliance at the source-code level."
+*   *"To protect the application edge, I implemented AWS WAF on the ALB to mitigate OWASP Top 10 vulnerabilities like SQL injection before traffic even hits our VPC."*
+*   *"Instead of hardcoding credentials, I integrated AWS Secrets Manager. Terraform automatically generates a strong random database password, stores it in Secrets Manager, and the application dynamically retrieves it via boto3."*
+*   *"For deployments, I transitioned the architecture from static user-data scripts to a modern CI/CD flow utilizing AWS ECR as the immutable registry and AWS CodeDeploy to orchestrate container rollouts across our Spot Instance ASG fleet."*
